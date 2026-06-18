@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reflect — Between Sessions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0F6E56;--teal-light:#E1F5EE;--teal-mid:#1D9E75;
+  --ink:#1a1a18;--ink-soft:#3d3d38;--muted:#8a8a82;
+  --pale:#f7f6f2;--paper:#fdfcf8;
+  --border:rgba(26,26,24,0.10);--border-soft:rgba(26,26,24,0.06);
+  --gold:#BA7517;--gold-light:#FAEEDA;
+  --c-emotions-bg:#FBEAF0;--c-emotions-fg:#993556;
+  --c-relationships-bg:#E6F1FB;--c-relationships-fg:#185FA5;
+  --c-self-bg:#EEEDFE;--c-self-fg:#3C3489;
+  --c-stress-bg:#FAEEDA;--c-stress-fg:#633806;
+  --c-growth-bg:#E1F5EE;--c-growth-fg:#0F6E56;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ── WELCOME ── */
+#welcome{align-items:center;justify-content:center;padding:2.5rem 2rem;position:relative;overflow:hidden;}
+#welcome::before{content:'';position:absolute;top:-120px;right:-120px;width:420px;height:420px;border-radius:50%;background:var(--teal-light);opacity:.45;}
+#welcome::after{content:'';position:absolute;bottom:-80px;left:-80px;width:300px;height:300px;border-radius:50%;background:#faeeda;opacity:.35;}
+.welcome-inner{position:relative;z-index:1;max-width:420px;width:100%;text-align:center;animation:fadeUp .8s ease both;}
+.logo-mark{width:56px;height:56px;border-radius:16px;background:var(--teal);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;box-shadow:0 4px 20px rgba(15,110,86,.25);}
+.logo-mark svg{width:28px;height:28px;}
+.welcome-inner h1{font-family:'Lora',serif;font-size:2.6rem;font-weight:400;letter-spacing:-.025em;margin-bottom:.4rem;color:var(--ink);}
+.welcome-tagline{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--teal);font-weight:500;margin-bottom:1.25rem;}
+.mission-block{background:rgba(255,255,255,.7);border:1px solid var(--border-soft);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:2rem;text-align:left;}
+.mission-block p{font-family:'Lora',serif;font-size:.95rem;color:var(--ink-soft);line-height:1.8;font-weight:400;}
+.mission-block p+p{margin-top:.75rem;}
+.mission-block strong{font-weight:500;color:var(--ink);}
+.welcome-actions{display:flex;flex-direction:column;gap:.75rem;align-items:center;}
+.btn-primary{padding:13px 28px;background:var(--teal);color:white;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;cursor:pointer;transition:opacity .2s,transform .15s;display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%;max-width:280px;}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+.btn-secondary{padding:11px 28px;background:transparent;color:var(--teal);border:1.5px solid var(--teal);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:7px;justify-content:center;width:100%;max-width:280px;}
+.btn-secondary:hover{background:var(--teal-light);}
+.btn-secondary svg,.btn-primary svg{width:16px;height:16px;flex-shrink:0;}
+.disclaimer{font-size:.69rem;color:var(--muted);max-width:340px;margin:1.25rem auto 0;line-height:1.6;padding:.7rem .95rem;border:1px solid var(--border-soft);border-radius:8px;background:rgba(255,255,255,.5);}
+.disclaimer a{color:var(--teal);text-decoration:none;}
+
+/* ── GROUNDING ── */
+#grounding{align-items:center;justify-content:flex-start;padding:0;background:var(--paper);position:relative;overflow:hidden;}
+.grounding-bg{position:absolute;inset:0;background:linear-gradient(180deg,#e8f5f0 0%,var(--paper) 60%);z-index:0;}
+.grounding-inner{position:relative;z-index:1;max-width:480px;width:100%;margin:0 auto;padding:1.5rem 1.75rem 2rem;display:flex;flex-direction:column;min-height:100vh;}
+.grounding-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 0 1.25rem;}
+.grounding-skip{font-size:.76rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;transition:color .2s;}
+.grounding-skip:hover{color:var(--teal);}
+.grounding-back{display:flex;align-items:center;gap:4px;font-size:.76rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;transition:color .2s;}
+.grounding-back:hover{color:var(--teal);}
+.grounding-back svg{width:12px;height:12px;}
+
+/* step display */
+.gstep{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation:fadeUp .5s ease both;}
+.gstep.active{display:flex;}
+.gstep-eyebrow{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);font-weight:500;margin-bottom:.75rem;}
+.gstep-title{font-family:'Lora',serif;font-size:1.6rem;font-weight:400;color:var(--ink);line-height:1.4;margin-bottom:.75rem;max-width:340px;}
+.gstep-body{font-size:.9rem;color:var(--muted);line-height:1.75;max-width:320px;font-weight:300;margin-bottom:1.5rem;}
+.gstep-body em{font-style:italic;font-family:'Lora',serif;color:var(--ink-soft);}
+
+/* breath circle */
+.breath-circle-wrap{margin:1.5rem 0;display:flex;align-items:center;justify-content:center;}
+.breath-circle{width:160px;height:160px;border-radius:50%;border:2.5px solid var(--teal);display:flex;align-items:center;justify-content:center;position:relative;transition:transform 4s ease-in-out;}
+.breath-circle.expand{transform:scale(1.35);}
+.breath-circle.contract{transform:scale(1);}
+.breath-inner{width:80px;height:80px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out;}
+.breath-circle.expand .breath-inner{transform:scale(1.2);}
+.breath-circle.contract .breath-inner{transform:scale(1);}
+.breath-instruction{font-family:'Lora',serif;font-size:1rem;color:var(--teal);font-style:italic;}
+.breath-count{font-size:.8rem;color:var(--muted);margin-top:.5rem;}
+
+/* senses */
+.senses-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;margin:1.5rem 0;max-width:320px;}
+.sense-item{display:flex;flex-direction:column;align-items:center;gap:.35rem;}
+.sense-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:1px solid var(--border);background:white;transition:all .3s;cursor:default;}
+.sense-icon.highlighted{background:var(--teal-light);border-color:var(--teal);transform:scale(1.08);}
+.sense-label{font-size:.66rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em;}
+.sense-count-display{font-size:2.5rem;font-family:'Lora',serif;font-weight:400;color:var(--teal);margin:.5rem 0 .25rem;}
+.sense-prompt{font-size:.85rem;color:var(--ink-soft);font-family:'Lora',serif;font-style:italic;max-width:280px;line-height:1.65;}
+
+/* body scan */
+.body-items{display:flex;flex-direction:column;gap:.6rem;max-width:300px;margin:1.25rem auto;}
+.body-item{display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border-radius:10px;border:1px solid var(--border);background:white;font-size:.88rem;color:var(--ink-soft);transition:all .4s;}
+.body-item.active{background:var(--teal-light);border-color:var(--teal);color:var(--teal);}
+.body-item svg{width:16px;height:16px;flex-shrink:0;}
+
+/* progress dots */
+.gstep-progress{display:flex;justify-content:center;gap:6px;padding:1rem 0 .5rem;}
+.gprog-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:background .3s;}
+.gprog-dot.done{background:var(--teal);}
+.gprog-dot.current{background:var(--teal-mid);transform:scale(1.2);}
+
+/* ── TOPIC SELECT (was "today") ── */
+#today{max-width:680px;margin:0 auto;width:100%;padding:0 1.5rem;flex-direction:column;}
+.page-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 0;border-bottom:1px solid var(--border-soft);}
+.ph-left{display:flex;align-items:center;gap:9px;}
+.header-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);}
+.header-brand{font-family:'Lora',serif;font-size:1rem;font-weight:500;color:var(--ink);}
+.header-date{font-size:.74rem;color:var(--muted);font-weight:300;}
+
+.today-intro{padding:1.25rem 0 .6rem;}
+.today-intro h2{font-family:'Lora',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:.3rem;}
+.today-intro p{font-size:.81rem;color:var(--muted);font-weight:300;line-height:1.65;max-width:480px;}
+.openness-note{margin-top:.75rem;padding:.7rem .95rem;background:var(--teal-light);border-radius:9px;font-size:.76rem;color:var(--teal);line-height:1.6;}
+.openness-note strong{font-weight:500;}
+.prog-row{display:flex;align-items:center;gap:7px;margin-top:.75rem;}
+.prog-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .3s;}
+.prog-dot.done{background:var(--teal);}
+.prog-label{font-size:.71rem;color:var(--muted);}
+
+.cat-cards{display:flex;flex-direction:column;gap:9px;padding-bottom:.5rem;}
+.cat-card{border:1px solid var(--border);border-radius:13px;background:white;overflow:hidden;transition:all .18s;cursor:pointer;}
+.cat-card:hover{border-color:var(--teal);transform:translateY(-1px);}
+.cat-card.answered{border-color:var(--teal);opacity:.75;}
+.cat-card-header{display:flex;align-items:center;gap:12px;padding:.9rem 1.05rem;}
+.cat-card-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
+.cat-card-info{flex:1;}
+.cat-card-name{font-size:.9rem;font-weight:500;display:block;margin-bottom:1px;}
+.cat-card-sub{font-size:.73rem;color:var(--muted);display:block;}
+.cat-card-status{display:flex;align-items:center;gap:4px;font-size:.71rem;font-weight:500;flex-shrink:0;}
+.cat-card-question{padding:.7rem 1.05rem .9rem;font-family:'Lora',serif;font-size:.88rem;color:var(--ink-soft);line-height:1.6;font-style:italic;border-top:1px solid var(--border-soft);}
+.ground-btn-wrap{padding:.75rem 0 1rem;border-top:1px solid var(--border-soft);}
+.ground-inline-btn{display:flex;align-items:center;gap:7px;width:100%;padding:.75rem 1rem;border:1px dashed var(--border);border-radius:11px;background:transparent;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--muted);cursor:pointer;transition:all .2s;justify-content:center;}
+.ground-inline-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-light);border-style:solid;}
+.ground-inline-btn svg{width:15px;height:15px;}
+
+/* ── JOURNAL ── */
+#journal{max-width:680px;margin:0 auto;width:100%;padding:0 1.5rem;flex-direction:column;}
+.journal-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 0;border-bottom:1px solid var(--border-soft);}
+.back-btn{display:flex;align-items:center;gap:4px;font-size:.77rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .2s;padding:0;}
+.back-btn:hover{color:var(--teal);}
+.back-btn svg{width:12px;height:12px;}
+.cat-badge{font-size:.67rem;font-weight:500;padding:3px 9px;border-radius:99px;}
+.prompt-section{padding:1.3rem 0 .95rem;border-bottom:1px solid var(--border-soft);}
+.prompt-label{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin-bottom:.45rem;}
+.prompt-q{font-family:'Lora',serif;font-size:1.18rem;font-weight:400;color:var(--ink);line-height:1.55;font-style:italic;max-width:500px;}
+.writing-section{padding:1rem 0;flex:1;}
+.mood-row{display:flex;align-items:center;gap:6px;margin-bottom:.85rem;flex-wrap:wrap;}
+.mood-label{font-size:.72rem;color:var(--muted);font-weight:400;margin-right:2px;}
+.mood-btn{padding:3px 10px;border-radius:99px;border:1px solid var(--border);background:transparent;font-size:.72rem;color:var(--ink-soft);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.mood-btn:hover,.mood-btn.selected{border-color:var(--teal);color:var(--teal);}
+.mood-btn.selected{background:var(--teal-light);font-weight:500;}
+.entry-textarea{width:100%;min-height:190px;border:none;background:transparent;font-family:'Lora',serif;font-size:1.02rem;color:var(--ink);line-height:1.8;resize:none;outline:none;caret-color:var(--teal);}
+.entry-textarea::placeholder{color:#c5c5bc;font-style:italic;}
+.word-count{font-size:.68rem;color:var(--muted);text-align:right;margin-top:.3rem;}
+.submit-bar{display:flex;align-items:center;justify-content:space-between;padding:.875rem 0 1rem;border-top:1px solid var(--border-soft);}
+.submit-hint{font-size:.72rem;color:var(--muted);font-weight:300;}
+.submit-btn{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--teal);color:white;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:500;cursor:pointer;transition:opacity .2s,transform .15s;}
+.submit-btn:hover{opacity:.88;transform:translateY(-1px);}
+.submit-btn:disabled{opacity:.38;cursor:not-allowed;transform:none;}
+.submit-btn svg{width:13px;height:13px;}
+
+/* ── REFLECTION ── */
+#reflection{max-width:680px;margin:0 auto;width:100%;padding:0 1.5rem;flex-direction:column;}
+.reflection-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 0;border-bottom:1px solid var(--border-soft);}
+.entry-recap{margin:1.25rem 0 0;padding:.95rem 1.15rem;background:var(--pale);border-radius:11px;border-left:3px solid var(--border);}
+.recap-label{font-size:.65rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem;font-weight:500;}
+.recap-text{font-family:'Lora',serif;font-size:.88rem;color:var(--ink-soft);line-height:1.75;font-style:italic;}
+.crisis-banner{display:none;margin:1rem 0;padding:1rem 1.15rem;background:#fff8f0;border:1px solid #f5c4b3;border-radius:11px;}
+.crisis-banner.visible{display:block;}
+.crisis-banner h3{font-size:.84rem;font-weight:500;color:#712B13;margin-bottom:3px;}
+.crisis-banner p{font-size:.79rem;color:#993C1D;line-height:1.6;}
+.crisis-banner a{color:#712B13;font-weight:500;}
+.reflection-card{margin:1rem 0;padding:1.35rem;background:white;border:1px solid var(--border-soft);border-radius:14px;animation:fadeUp .5s ease both;}
+.ref-eyebrow{display:flex;align-items:center;gap:6px;font-size:.65rem;letter-spacing:.09em;text-transform:uppercase;color:var(--teal);font-weight:500;margin-bottom:.7rem;}
+.ref-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);}
+.reflection-text{font-family:'Lora',serif;font-size:1.03rem;color:var(--ink);line-height:1.85;}
+.reflection-text.loading{color:var(--muted);font-style:italic;}
+.typing-dots{display:inline-flex;gap:4px;align-items:center;margin-left:4px;}
+.typing-dots span{width:4px;height:4px;border-radius:50%;background:var(--muted);animation:pulse 1.2s ease-in-out infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+.reaction-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;margin-top:.95rem;padding-top:.85rem;border-top:1px solid var(--border-soft);}
+.reaction-left{display:flex;align-items:center;gap:6px;}
+.react-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;border:1px solid var(--border);background:transparent;font-size:.75rem;color:var(--ink-soft);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s;}
+.react-btn svg{width:14px;height:14px;flex-shrink:0;transition:all .2s;}
+.react-btn:hover{border-color:var(--teal);color:var(--teal);}
+.react-btn.liked{background:var(--gold-light);border-color:var(--gold);color:var(--gold);}
+.react-btn.liked svg{fill:var(--gold);stroke:var(--gold);}
+.react-btn.saved{background:var(--teal-light);border-color:var(--teal);color:var(--teal);}
+.react-btn.saved svg{fill:var(--teal);stroke:var(--teal);}
+.react-hint{font-size:.68rem;color:var(--muted);font-style:italic;font-family:'Lora',serif;}
+.therapy-tip{margin-top:.75rem;padding:.65rem .9rem;background:var(--teal-light);border-radius:9px;font-size:.73rem;color:var(--teal);line-height:1.6;}
+.therapy-tip strong{font-weight:500;}
+.ref-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:.75rem;}
+.action-btn{padding:6px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;font-size:.76rem;color:var(--ink-soft);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.action-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-light);}
+.action-btn.primary{background:var(--teal);color:white;border-color:var(--teal);}
+.action-btn.primary:hover{opacity:.88;}
+.closing-ground-card{margin-top:.875rem;padding:.9rem 1.1rem;border:1px dashed var(--teal);border-radius:11px;background:var(--teal-light);}
+.closing-ground-card p{font-size:.78rem;color:var(--teal);line-height:1.6;margin-bottom:.6rem;}
+.closing-ground-card strong{font-weight:500;}
+.closing-ground-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:opacity .15s;}
+.closing-ground-btn:hover{opacity:.88;}
+.closing-ground-btn svg{width:14px;height:14px;}
+
+/* ── SAVED ── */
+#saved{max-width:680px;margin:0 auto;width:100%;padding:0 1.5rem;flex-direction:column;}
+.saved-card{margin-bottom:.875rem;padding:1.05rem 1.15rem;background:white;border:1px solid var(--border-soft);border-radius:13px;}
+.saved-card-meta{display:flex;align-items:center;gap:6px;margin-bottom:.5rem;flex-wrap:wrap;}
+.saved-card-date{font-size:.7rem;color:var(--muted);}
+.saved-card-badge{font-size:.66rem;font-weight:500;padding:2px 7px;border-radius:99px;}
+.saved-card-snippet{font-size:.76rem;color:var(--muted);font-style:italic;font-family:'Lora',serif;margin-bottom:.45rem;line-height:1.5;}
+.saved-card-text{font-family:'Lora',serif;font-size:.93rem;color:var(--ink);line-height:1.8;}
+.saved-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.65rem;padding-top:.65rem;border-top:1px solid var(--border-soft);}
+.tiny-btn{font-size:.7rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .15s;padding:0;}
+.tiny-btn:hover{color:var(--teal);}
+.tiny-btn.danger:hover{color:#993C1D;}
+
+/* ── HISTORY ── */
+#history{max-width:680px;margin:0 auto;width:100%;padding:0 1.5rem;flex-direction:column;}
+.entry-card{padding:.9rem 0;border-bottom:1px solid var(--border-soft);}
+.ec-meta{display:flex;align-items:center;gap:6px;margin-bottom:.3rem;flex-wrap:wrap;}
+.ec-date{font-size:.7rem;color:var(--muted);font-weight:300;}
+.ec-badge{font-size:.66rem;font-weight:500;padding:2px 7px;border-radius:99px;}
+.ec-mood{font-size:.66rem;color:var(--muted);}
+.ec-saved{display:inline-flex;align-items:center;gap:2px;font-size:.64rem;color:var(--gold);font-weight:500;}
+.ec-text{font-family:'Lora',serif;font-size:.86rem;color:var(--ink-soft);line-height:1.6;font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.ec-reflection{font-size:.75rem;color:var(--teal);margin-top:.3rem;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.empty-state{text-align:center;padding:3rem 2rem;color:var(--muted);font-size:.86rem;font-family:'Lora',serif;font-style:italic;line-height:1.7;}
+
+/* ── NAV ── */
+.bottom-nav{display:flex;border-top:1px solid var(--border-soft);background:var(--paper);position:sticky;bottom:0;z-index:10;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.7rem 0;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);font-size:.63rem;transition:color .15s;gap:3px;}
+.nav-item svg{width:18px;height:18px;}
+.nav-item.active{color:var(--teal);}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,60%,100%{opacity:.2;transform:scale(.8)}30%{opacity:1;transform:scale(1)}}
+@keyframes heartPop{0%{transform:scale(1)}50%{transform:scale(1.4)}100%{transform:scale(1)}}
+@keyframes breathPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.heart-pop{animation:heartPop .28s ease;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+/* ── VOICE ── */
+.voice-bar{display:flex;align-items:center;gap:10px;padding:.75rem 0 .5rem;}
+.voice-btn{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:99px;border:1.5px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:all .2s;}
+.voice-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-light);}
+.voice-btn.recording{border-color:#993C1D;background:#FAECE7;color:#993C1D;animation:recPulse 1.4s ease-in-out infinite;}
+.voice-btn svg{width:15px;height:15px;flex-shrink:0;}
+.voice-status{font-size:.76rem;color:var(--muted);font-family:'DM Sans',sans-serif;flex:1;}
+.voice-timer{font-size:.76rem;color:#993C1D;font-weight:500;font-variant-numeric:tabular-nums;min-width:36px;}
+.voice-wave{display:none;align-items:center;gap:2px;height:18px;}
+.voice-wave.active{display:flex;}
+.voice-wave span{display:block;width:3px;border-radius:2px;background:#993C1D;animation:wave 1s ease-in-out infinite;}
+.voice-wave span:nth-child(1){height:6px;animation-delay:0s;}
+.voice-wave span:nth-child(2){height:12px;animation-delay:.1s;}
+.voice-wave span:nth-child(3){height:18px;animation-delay:.2s;}
+.voice-wave span:nth-child(4){height:10px;animation-delay:.3s;}
+.voice-wave span:nth-child(5){height:6px;animation-delay:.4s;}
+.voice-transcribing{font-size:.76rem;color:var(--teal);display:none;align-items:center;gap:6px;}
+.voice-transcribing.active{display:flex;}
+@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(153,60,29,.25)}50%{box-shadow:0 0 0 6px rgba(153,60,29,0)}}
+@keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     WELCOME
+══════════════════════════════════════════ -->
+<div id="welcome" class="screen active">
+  <div class="welcome-inner">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402C1 3.335 4.819 1 8 1c1.99 0 4.011 1.01 5.093 2.5C14.132 2.01 16.09 1 18 1c3.181 0 7 2.335 7 6.191 0 4.105-5.37 8.863-11 14.402z"/></svg>
+    </div>
+    <h1>Reflect</h1>
+    <div class="welcome-tagline">Between sessions</div>
+    <div class="mission-block">
+      <p><strong>Reflect is your private, safe space</strong> to process what's on your mind between therapy appointments.</p>
+      <p>Here you can <strong>vent freely, find support, gain perspective,</strong> and receive honest, thoughtful reflections — all in complete privacy. Nothing you share leaves this space without your permission.</p>
+      <p>Five topics. One prompt each. Write at your own pace, in your own words.</p>
+    </div>
+    <div class="welcome-actions">
+      <button class="btn-primary" onclick="ss('grounding'); startGrounding('entry')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M8 12s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        Start with grounding
+      </button>
+      <button class="btn-secondary" onclick="ss('today')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Go straight to topics
+      </button>
+    </div>
+    <div class="disclaimer">
+      Reflect supports your wellbeing between professional appointments — it is not a substitute for therapy or crisis care.<br>
+      In crisis? <a href="tel:18334564566">Crisis Services Canada: 1-833-456-4566</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     GROUNDING EXERCISE
+══════════════════════════════════════════ -->
+<div id="grounding" class="screen">
+  <div class="grounding-bg"></div>
+  <div class="grounding-inner">
+    <div class="grounding-header">
+      <button class="grounding-back" onclick="groundingBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <button class="grounding-skip" onclick="groundingSkip()">Skip grounding →</button>
+    </div>
+
+    <!-- Progress dots -->
+    <div class="gstep-progress" id="gstep-progress"></div>
+
+    <!-- STEP 1: Welcome to grounding -->
+    <div class="gstep active" id="gstep-1">
+      <div class="gstep-eyebrow" id="gstep-1-eyebrow">Grounding exercise</div>
+      <div class="gstep-title" id="gstep-1-title">Let's help you arrive</div>
+      <div class="gstep-body" id="gstep-1-body">Before we begin, take a moment to settle in. This short grounding practice will help you feel present, calm, and ready to reflect openly.<br><br><em>Find a comfortable position. You're safe here.</em></div>
+      <button class="btn-primary" style="max-width:200px;" onclick="nextGStep()">
+        I'm ready
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- STEP 2: Breathing -->
+    <div class="gstep" id="gstep-2">
+      <div class="gstep-eyebrow">Deep breathing · <span id="breath-counter">0</span> of 5</div>
+      <div class="gstep-title">Follow the circle</div>
+      <div class="breath-circle-wrap">
+        <div class="breath-circle" id="breath-circle">
+          <div class="breath-inner">
+            <span class="breath-instruction" id="breath-instruction">Inhale</span>
+          </div>
+        </div>
+      </div>
+      <div class="breath-count" id="breath-status">Breathe with the circle — let it guide you.</div>
+    </div>
+
+    <!-- STEP 3: Eyes closed -->
+    <div class="gstep" id="gstep-3">
+      <div class="gstep-eyebrow">Settle in</div>
+      <div class="gstep-title" id="gstep-3-title">Close your eyes for a moment</div>
+      <div class="gstep-body" id="gstep-3-body">Rest your eyes. Take one more slow breath.<br><br><em>Think about why you've come here today. What's on your mind? You don't need to name it yet — just let it be present.</em><br><br>Take as long as you need.</div>
+      <button class="btn-primary" style="max-width:240px;margin-top:.5rem;" onclick="nextGStep()">
+        I'm back
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- STEP 4: 5 senses -->
+    <div class="gstep" id="gstep-4">
+      <div class="gstep-eyebrow">5 senses grounding</div>
+      <div class="gstep-title">Notice what's around you</div>
+      <div class="senses-grid">
+        <div class="sense-item"><div class="sense-icon" id="sense-5">👁️</div><div class="sense-label">See</div></div>
+        <div class="sense-item"><div class="sense-icon" id="sense-4">👂</div><div class="sense-label">Hear</div></div>
+        <div class="sense-item"><div class="sense-icon" id="sense-3">✋</div><div class="sense-label">Touch</div></div>
+        <div class="sense-item"><div class="sense-icon" id="sense-2">👃</div><div class="sense-label">Smell</div></div>
+        <div class="sense-item"><div class="sense-icon" id="sense-1">👅</div><div class="sense-label">Taste</div></div>
+      </div>
+      <div class="sense-count-display" id="sense-count-display">5</div>
+      <div class="sense-prompt" id="sense-prompt">Name <strong>5 things you can see</strong> right now. Look slowly around the space you're in.</div>
+      <button class="btn-primary" style="max-width:200px;margin-top:1.25rem;" id="senses-next-btn" onclick="nextSense()">
+        Next sense →
+      </button>
+    </div>
+
+    <!-- STEP 5: Body scan -->
+    <div class="gstep" id="gstep-5">
+      <div class="gstep-eyebrow">Body awareness</div>
+      <div class="gstep-title">Relax and be present</div>
+      <div class="gstep-body">Gently bring your attention to each part of your body below. Notice any tension — and let it go.</div>
+      <div class="body-items">
+        <div class="body-item" id="body-jaw">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/></svg>
+          Unclench your jaw
+        </div>
+        <div class="body-item" id="body-shoulders">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          Drop your shoulders
+        </div>
+        <div class="body-item" id="body-hands">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+          Open your hands
+        </div>
+        <div class="body-item" id="body-breath">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8a6 6 0 0 1-7.743 5.743L10 14l-1 1-1 1H6l-1 1H3l1-4 1.001-1.002L5 11l.258-.516A6 6 0 1 1 18 8z"/></svg>
+          Take one slow breath
+        </div>
+      </div>
+      <button class="btn-primary" style="max-width:240px;margin-top:1.1rem;" id="body-next-btn" onclick="nextBodyItem()">
+        Done →
+      </button>
+    </div>
+
+    <!-- STEP 6: Ready -->
+    <div class="gstep" id="gstep-6">
+      <div class="gstep-eyebrow">You're grounded</div>
+      <div class="gstep-title" id="gstep-6-title">You're present. You're safe.</div>
+      <div class="gstep-body" id="gstep-6-body">Well done. Take a moment to notice how you feel right now — a little more settled, a little more here.<br><br><em>This is your space. There's no right way to do this. Just honesty.</em></div>
+      <button class="btn-primary" style="max-width:240px;" id="gstep-6-btn" onclick="groundingComplete()">
+        Begin my session →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TODAY — 5 TOPICS
+══════════════════════════════════════════ -->
+<div id="today" class="screen">
+  <div class="page-header">
+    <div class="ph-left">
+      <div class="header-dot"></div>
+      <span class="header-brand">Reflect</span>
+    </div>
+    <span class="header-date" id="today-date"></span>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:.5rem;">
+    <div class="today-intro">
+      <h2>What's coming up for you today?</h2>
+      <p>Choose one or more topics below. Each has one prompt — written just for today.</p>
+      <div class="openness-note">
+        <strong>This is a safe space.</strong> Be as open and honest as you feel comfortable being. Everything you share stays completely private to you.
+      </div>
+      <div class="prog-row">
+        <div class="prog-dot" id="prog-0"></div>
+        <div class="prog-dot" id="prog-1"></div>
+        <div class="prog-dot" id="prog-2"></div>
+        <div class="prog-dot" id="prog-3"></div>
+        <div class="prog-dot" id="prog-4"></div>
+        <span class="prog-label" id="prog-label">0 of 5 answered today</span>
+      </div>
+    </div>
+    <div class="cat-cards" id="cat-cards"></div>
+    <div class="ground-btn-wrap">
+      <button class="ground-inline-btn" onclick="ss('grounding'); startGrounding('entry')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M4.93 4.93l4.24 4.24"/><path d="M14.83 9.17l4.24-4.24"/><path d="M14.83 14.83l4.24 4.24"/><path d="M9.17 14.83l-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>
+        Take a grounding moment before writing
+      </button>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="ss('today')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Today
+    </button>
+    <button class="nav-item" onclick="ss('saved')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      Saved
+    </button>
+    <button class="nav-item" onclick="ss('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Entries
+    </button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JOURNAL
+══════════════════════════════════════════ -->
+<div id="journal" class="screen">
+  <div class="journal-header">
+    <button class="back-btn" onclick="ss('today')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      All topics
+    </button>
+    <span class="cat-badge" id="journal-badge"></span>
+  </div>
+  <div class="prompt-section">
+    <div class="prompt-label" id="journal-cat-label"></div>
+    <div class="prompt-q" id="journal-prompt"></div>
+  </div>
+  <div class="writing-section">
+    <div class="mood-row">
+      <span class="mood-label">Feeling right now:</span>
+      <button class="mood-btn" onclick="selectMood(this)">okay</button>
+      <button class="mood-btn" onclick="selectMood(this)">good</button>
+      <button class="mood-btn" onclick="selectMood(this)">anxious</button>
+      <button class="mood-btn" onclick="selectMood(this)">low</button>
+      <button class="mood-btn" onclick="selectMood(this)">tired</button>
+      <button class="mood-btn" onclick="selectMood(this)">restless</button>
+      <button class="mood-btn" onclick="selectMood(this)">grateful</button>
+    </div>
+    <textarea class="entry-textarea" id="entry-input" oninput="updateWordCount()"></textarea>
+    <div class="voice-bar">
+      <button class="voice-btn" id="voice-btn" onclick="toggleRecording()" aria-label="Record voice entry">
+        <svg id="voice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        <span id="voice-btn-label">Speak instead</span>
+      </button>
+      <div class="voice-wave" id="voice-wave"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="voice-transcribing" id="voice-transcribing">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-5.61"/></svg>
+        Transcribing…
+      </div>
+      <span class="voice-status" id="voice-status"></span>
+      <span class="voice-timer" id="voice-timer" style="display:none;"></span>
+    </div>
+    <div class="word-count" id="word-count">0 words</div>
+  </div>
+  <div class="submit-bar">
+    <span class="submit-hint">Private · just for you</span>
+    <button class="submit-btn" id="submit-btn" onclick="submitEntry()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      Reflect
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     REFLECTION
+══════════════════════════════════════════ -->
+<div id="reflection" class="screen">
+  <div class="reflection-header">
+    <button class="back-btn" onclick="ss('today')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      All topics
+    </button>
+    <span class="cat-badge" id="reflection-badge"></span>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:1rem;">
+    <div class="entry-recap">
+      <div class="recap-label">Your entry</div>
+      <div class="recap-text" id="recap-text"></div>
+    </div>
+    <div class="crisis-banner" id="crisis-banner">
+      <h3>You're not alone</h3>
+      <p>What you've shared matters. Please reach out to <a href="tel:18334564566">Crisis Services Canada: 1-833-456-4566</a> (24/7), or text 45645. In immediate danger, call 911.</p>
+    </div>
+    <div class="reflection-card" id="reflection-card">
+      <div class="ref-eyebrow">
+        <div class="ref-eyebrow-dot"></div>
+        <span id="ref-mode-label">Reflection</span>
+      </div>
+      <div class="reflection-text loading" id="reflection-output">
+        Reading your entry<span class="typing-dots"><span></span><span></span><span></span></span>
+      </div>
+      <div class="reaction-bar" id="reaction-bar" style="display:none;">
+        <div class="reaction-left">
+          <button class="react-btn" id="like-btn" onclick="toggleLike()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402C1 3.335 4.819 1 8 1c1.99 0 4.011 1.01 5.093 2.5C14.132 2.01 16.09 1 18 1c3.181 0 7 2.335 7 6.191 0 4.105-5.37 8.863-11 14.402z"/></svg>
+            <span id="like-label">This resonated</span>
+          </button>
+          <button class="react-btn" id="save-btn" onclick="toggleSave()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <span id="save-label">Save for session</span>
+          </button>
+        </div>
+        <span class="react-hint" id="react-hint"></span>
+      </div>
+      <div class="therapy-tip" id="therapy-tip" style="display:none;">
+        <strong>Saved.</strong> Bring this to your next session as a starting point for what's been coming up for you.
+      </div>
+      <div class="ref-actions" id="ref-actions" style="display:none;">
+        <button class="action-btn" onclick="ss('today')">Back to topics</button>
+        <button class="action-btn primary" onclick="ss('journal')">Keep writing</button>
+      </div>
+      <div class="closing-ground-card" id="closing-ground-card" style="display:none;">
+        <p><strong>Well done for showing up today.</strong> Talking about feelings takes courage. Would you like a short grounding exercise to close your session and carry some calm with you?</p>
+        <button class="closing-ground-btn" onclick="ss('grounding'); startGrounding('closing')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><circle cx="12" cy="12" r="4"/></svg>
+          Yes, ground me
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SAVED
+══════════════════════════════════════════ -->
+<div id="saved" class="screen">
+  <div class="page-header">
+    <div class="ph-left"><div class="header-dot"></div><span class="header-brand">Saved reflections</span></div>
+    <span class="header-date" id="saved-count"></span>
+  </div>
+  <p style="font-size:.77rem;color:var(--muted);line-height:1.65;font-family:'Lora',serif;font-style:italic;padding:.7rem 0 .4rem;flex-shrink:0;">Reflections you've saved — bring these to your next session, or revisit whenever you need them.</p>
+  <div id="saved-list" style="flex:1;overflow-y:auto;padding-bottom:1rem;"></div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="ss('today')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Today</button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</button>
+    <button class="nav-item" onclick="ss('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Entries</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════
+     HISTORY
+══════════════════════════════════════════ -->
+<div id="history" class="screen">
+  <div class="page-header">
+    <div class="ph-left"><div class="header-dot"></div><span class="header-brand">All entries</span></div>
+    <span class="header-date" id="entry-count"></span>
+  </div>
+  <div id="entries-list" style="flex:1;overflow-y:auto;padding-bottom:1rem;"></div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="ss('today')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Today</button>
+    <button class="nav-item" onclick="ss('saved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</button>
+    <button class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Entries</button>
+  </nav>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const CATS = {
+  emotions:{key:'emotions',label:'Emotions',icon:'🌊',sub:'Feelings that are hard to manage or understand',bg:'var(--c-emotions-bg)',fg:'var(--c-emotions-fg)',modeLabel:'Emotional reflection',
+    system:`You are the reflective voice of Reflect — a safe, private wellness journaling app used between therapy sessions. The user is writing about EMOTIONS.
+Your role: make them feel completely heard, gently illuminate what's underneath their words, and invite deeper reflection.
+1. WITNESS — Name the specific emotional quality beneath their words. Be precise.
+2. ILLUMINATE — Offer one psychological observation without clinical language.
+3. INVITE — End with exactly one open question that deepens reflection.
+Tone: warm, grounded, specific. 100–150 words. Never start "It sounds like", "I hear that", "That must be". Never use: journey, healing, growth, space, validate, unpack, sit with. No unsolicited advice or silver linings.
+CRISIS PROTOCOL: If entry suggests crisis or self-harm → respond only: CRISIS`},
+  relationships:{key:'relationships',label:'Relationships',icon:'🤝',sub:'Difficulties with other people or social connection',bg:'var(--c-relationships-bg)',fg:'var(--c-relationships-fg)',modeLabel:'Relationship reflection',
+    system:`You are the reflective voice of Reflect — a safe, private wellness journaling app used between therapy sessions. The user is writing about RELATIONSHIPS.
+1. WITNESS — Reflect the specific relational dynamic at play, not just feelings.
+2. ILLUMINATE — Name a pattern, dynamic, or unmet need with specificity.
+3. INVITE — One question that opens the relational picture further.
+Tone: warm, curious, non-judgmental toward all parties. 100–150 words. Never start "It sounds like", "I hear that", "That must be". Never use: journey, healing, growth, space, validate, unpack, sit with.
+CRISIS PROTOCOL: If entry suggests crisis or self-harm → respond only: CRISIS`},
+  self:{key:'self',label:'Self',icon:'🪞',sub:'Self-worth, confidence, and personal identity',bg:'var(--c-self-bg)',fg:'var(--c-self-fg)',modeLabel:'Self reflection',
+    system:`You are the reflective voice of Reflect — a safe, private wellness journaling app used between therapy sessions. The user is writing about SELF — identity, self-worth, confidence.
+1. WITNESS — Name the self-narrative or belief underneath their words.
+2. ILLUMINATE — Offer a different angle on that self-narrative. Widen it without contradicting it.
+3. INVITE — One question for honest self-examination without pressure.
+Tone: warm, careful, deeply respectful. 100–150 words. Never start "It sounds like", "I hear that", "That must be". Never use: journey, healing, growth, space, validate, unpack, sit with. Never be falsely reassuring.
+CRISIS PROTOCOL: If entry suggests crisis or self-harm → respond only: CRISIS`},
+  stress:{key:'stress',label:'Stress',icon:'⚡',sub:'Pressure from responsibilities and life situations',bg:'var(--c-stress-bg)',fg:'var(--c-stress-fg)',modeLabel:'Stress reflection',
+    system:`You are the reflective voice of Reflect — a safe, private wellness journaling app used between therapy sessions. The user is writing about STRESS — external pressures and demands.
+1. WITNESS — Name what's actually heavy with specificity.
+2. ILLUMINATE — One honest observation about what the stress reveals — what they value, protect, or what may be unsustainable.
+3. INVITE — One practical or reflective question about what's in their control or what they need.
+Tone: warm but direct and grounded. 100–150 words. Never start "It sounds like", "I hear that", "That must be". Never use: journey, healing, growth, space, validate, unpack, sit with.
+CRISIS PROTOCOL: If entry suggests crisis or self-harm → respond only: CRISIS`},
+  growth:{key:'growth',label:'Growth',icon:'🌱',sub:'Healing, habits, and becoming who you want to be',bg:'var(--c-growth-bg)',fg:'var(--c-growth-fg)',modeLabel:'Growth reflection',
+    system:`You are the reflective voice of Reflect — a safe, private wellness journaling app used between therapy sessions. The user is writing about GROWTH — habits, resilience, becoming.
+1. WITNESS — Acknowledge where they actually are right now, not where they want to be.
+2. ILLUMINATE — One honest observation about what's helping or getting in the way.
+3. INVITE — One forward-leaning question for a real next step in their thinking.
+Tone: warm, encouraging, honest — never preachy. 100–150 words. Never start "It sounds like", "I hear that", "That must be". Never use: journey, healing, growth, space, validate, unpack, sit with.
+CRISIS PROTOCOL: If entry suggests crisis or self-harm → respond only: CRISIS`}
+};
+
+const CAT_KEYS = ['emotions','relationships','self','stress','growth'];
+const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+const promptIdx = dayOfYear % 5;
+
+const DAILY_PROMPTS = {
+  emotions:["What emotion has been sitting with you most today — and where do you feel it in your body?","What have you been trying not to feel lately?","If your anxiety or sadness could speak, what would it say?","When did you last feel genuinely at ease?","What feeling are you most tired of carrying?"],
+  relationships:["Is there something unspoken sitting between you and someone important to you?","What relationship is taking more energy than it's giving right now?","When did you last feel truly understood by someone?","What's something you wish you could say to someone but haven't?","Is there a pattern in your relationships you keep noticing?"],
+  self:["What's the harshest thing you've said to yourself this week?","Where do you feel most like yourself — and least?","What belief about yourself are you not sure is actually true?","If you had to describe who you're becoming right now, what would you say?","What are you afraid people would discover if they really knew you?"],
+  stress:["What's weighing on you most right now — and what would 'enough' actually look like?","Where is most of your energy going? Is that where you want it to go?","What are you putting off that's quietly adding to your stress?","What part of your life feels most out of balance?","What would you let go of today if you gave yourself permission?"],
+  growth:["What's one small thing you did recently that felt like the person you want to become?","What habit are you most aware of wanting to change — and what gets in the way?","What does your version of 'doing well' actually look like right now?","Where are you being too hard on yourself about your progress?","What could you do tomorrow that your future self would thank you for?"]
+};
+
+// ══ GROUNDING DATA ══
+// Multiple variations to keep it fresh — rotated per day
+const GROUNDING_VARIANTS = [
+  {
+    step1:{title:"Let's help you arrive",body:"Before we begin, take a moment to settle in. This short grounding practice will help you feel present, calm, and ready to reflect openly.\n\nFind a comfortable position. You're safe here."},
+    step3:{title:"Close your eyes for a moment",body:"Rest your eyes. Take one more slow breath.\n\nThink about why you've come here today. What's on your mind? You don't need to name it yet — just let it be present.\n\nTake as long as you need."},
+    step6:{title:"You're present. You're safe.",body:"Well done. Take a moment to notice how you feel right now — a little more settled, a little more here.\n\nThis is your space. There's no right way to do this. Just honesty.",btn:"Begin my session →"}
+  },
+  {
+    step1:{title:"A moment just for you",body:"Before diving in, let's create a little stillness. This practice takes only a few minutes and helps you arrive fully — mind and body.\n\nSit comfortably. There's no rush."},
+    step3:{title:"Soften your gaze",body:"Let your eyes go heavy or close them gently. Breathe slowly.\n\nWhat brought you here today? Don't try to solve it — just let it surface. Notice it with curiosity, not judgment.\n\nWhen you're ready, come back."},
+    step6:{title:"You showed up. That matters.",body:"The simple act of pausing and turning inward takes real courage. Notice any small shift in how you feel.\n\nFrom this quieter place, you're ready to reflect honestly and openly.",btn:"Let's begin →"}
+  },
+  {
+    step1:{title:"Settling into the present",body:"Taking a moment to ground yourself before reflecting helps you connect more honestly with what's really going on inside.\n\nGet comfortable. Let your shoulders drop. You've got time."},
+    step3:{title:"Turn your attention inward",body:"Gently close or lower your eyes. Breathe out slowly.\n\nWithout pressure, let the reason you came here today drift into awareness. Don't analyze it — just acknowledge it.\n\nStay here as long as feels right."},
+    step6:{title:"Grounded. Present. Ready.",body:"Feel the difference between where you were a few minutes ago and now. That shift — however subtle — is real.\n\nTake that sense of calm with you into your reflection.",btn:"Start reflecting →"}
+  }
+];
+
+// Closing grounding variants
+const CLOSING_VARIANTS = [
+  {
+    step1:{title:"A gentle close",body:"You did something meaningful today by showing up and being honest. Let's take a few minutes to settle back into your body and carry some calm with you.\n\nMake yourself comfortable."},
+    step6:{title:"You can carry this with you",body:"That sense of groundedness doesn't have to stay here. It's available to you whenever you need it — just a few breaths away.\n\nThank you for being honest with yourself today.",btn:"Close my session →"}
+  },
+  {
+    step1:{title:"Coming back to yourself",body:"Exploring difficult feelings takes real courage. Let's take a moment to honour that and bring yourself gently back to the present.\n\nBreathe. You're okay."},
+    step6:{title:"Be gentle with yourself today",body:"Whatever came up during your session — notice it without judgment. You don't need to resolve everything at once.\n\nYou showed up. That's enough.",btn:"Finish session →"}
+  },
+  {
+    step1:{title:"Easing back into your day",body:"After sitting with your feelings, it helps to gently reorient yourself before stepping back into the world.\n\nThis will only take a few minutes."},
+    step6:{title:"Well done for today",body:"You brought your honest self here and that matters. Carry this stillness with you — and come back whenever you need the space.\n\nTake care of yourself.",btn:"Done for today →"}
+  }
+];
+
+// ══ STATE ══
+let currentCat = null, selectedMood = null, currentEntry = null, currentReflection = null;
+let isLiked = false, isSaved = false;
+let groundingContext = 'entry'; // 'entry' or 'closing'
+let currentGStep = 1, totalGSteps = 6;
+let breathCount = 0, breathTimer = null;
+let senseStep = 5, bodyStep = 0;
+let entries = JSON.parse(localStorage.getItem('reflect_entries') || '[]');
+let savedReflections = JSON.parse(localStorage.getItem('reflect_saved') || '[]');
+const todayKey = new Date().toDateString();
+let todayAnswered = JSON.parse(localStorage.getItem('reflect_today_' + todayKey) || '[]');
+
+// ══ INIT ══
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
+renderTodayCards();
+
+// ══ NAVIGATION ══
+function ss(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'today') renderTodayCards();
+  if (id === 'history') renderHistory();
+  if (id === 'saved') renderSaved();
+}
+
+// ══ GROUNDING ══
+function startGrounding(context) {
+  groundingContext = context;
+  currentGStep = 1;
+  senseStep = 5;
+  bodyStep = 0;
+  breathCount = 0;
+  if (breathTimer) clearTimeout(breathTimer);
+
+  // pick variant by day + some rotation
+  const varIdx = (dayOfYear + (context === 'closing' ? 1 : 0)) % 3;
+  const variant = context === 'closing' ? CLOSING_VARIANTS[varIdx] : GROUNDING_VARIANTS[varIdx];
+
+  // Apply variant text
+  document.getElementById('gstep-1-title').textContent = variant.step1.title;
+  document.getElementById('gstep-1-body').innerHTML = variant.step1.body.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  document.getElementById('gstep-3-title').textContent = context === 'closing' ? variant.step1.title : GROUNDING_VARIANTS[varIdx].step3.title;
+  document.getElementById('gstep-3-body').innerHTML = (context === 'closing' ? CLOSING_VARIANTS[varIdx].step1.body : GROUNDING_VARIANTS[varIdx].step3.body).replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  document.getElementById('gstep-6-title').textContent = variant.step6.title;
+  document.getElementById('gstep-6-body').innerHTML = variant.step6.body.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  document.getElementById('gstep-6-btn').textContent = variant.step6.btn;
+
+  // also fix step3 properly
+  if (context !== 'closing') {
+    document.getElementById('gstep-3-title').textContent = GROUNDING_VARIANTS[varIdx].step3.title;
+    document.getElementById('gstep-3-body').innerHTML = GROUNDING_VARIANTS[varIdx].step3.body.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  }
+
+  showGStep(1);
+  buildProgressDots();
+}
+
+function buildProgressDots() {
+  const wrap = document.getElementById('gstep-progress');
+  wrap.innerHTML = '';
+  for (let i = 1; i <= totalGSteps; i++) {
+    const d = document.createElement('div');
+    d.className = 'gprog-dot' + (i < currentGStep ? ' done' : i === currentGStep ? ' current' : '');
+    d.id = 'gprog-' + i;
+    wrap.appendChild(d);
+  }
+}
+
+function updateProgressDots() {
+  for (let i = 1; i <= totalGSteps; i++) {
+    const d = document.getElementById('gprog-' + i);
+    if (!d) continue;
+    d.className = 'gprog-dot' + (i < currentGStep ? ' done' : i === currentGStep ? ' current' : '');
+  }
+}
+
+function showGStep(n) {
+  document.querySelectorAll('.gstep').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('gstep-' + n);
+  if (el) el.classList.add('active');
+  currentGStep = n;
+  updateProgressDots();
+  if (n === 2) startBreathing();
+  if (n === 4) startSenses();
+  if (n === 5) startBodyScan();
+}
+
+function nextGStep() {
+  if (currentGStep < totalGSteps) showGStep(currentGStep + 1);
+}
+
+function groundingBack() {
+  if (currentGStep > 1) { showGStep(currentGStep - 1); }
+  else { if (groundingContext === 'closing') ss('reflection'); else ss('welcome'); }
+}
+
+function groundingSkip() {
+  if (breathTimer) clearTimeout(breathTimer);
+  if (groundingContext === 'closing') ss('today');
+  else ss('today');
+}
+
+function groundingComplete() {
+  if (breathTimer) clearTimeout(breathTimer);
+  if (groundingContext === 'closing') ss('today');
+  else ss('today');
+}
+
+// BREATHING
+function startBreathing() {
+  breathCount = 0;
+  document.getElementById('breath-counter').textContent = '0';
+  document.getElementById('breath-status').textContent = 'Breathe with the circle — let it guide you.';
+  runBreath();
+}
+
+function runBreath() {
+  if (breathCount >= 5) {
+    document.getElementById('breath-status').textContent = 'Beautiful. Five breaths complete.';
+    document.getElementById('breath-instruction').textContent = '✓';
+    breathTimer = setTimeout(() => showGStep(3), 1800);
+    return;
+  }
+  // Inhale
+  const circle = document.getElementById('breath-circle');
+  document.getElementById('breath-instruction').textContent = 'Inhale';
+  circle.classList.remove('contract'); circle.classList.add('expand');
+  document.getElementById('breath-status').textContent = 'Breathe in slowly through your nose…';
+  breathTimer = setTimeout(() => {
+    // Hold
+    document.getElementById('breath-instruction').textContent = 'Hold';
+    document.getElementById('breath-status').textContent = 'Hold gently…';
+    breathTimer = setTimeout(() => {
+      // Exhale
+      document.getElementById('breath-instruction').textContent = 'Exhale';
+      circle.classList.remove('expand'); circle.classList.add('contract');
+      document.getElementById('breath-status').textContent = 'Breathe out slowly through your mouth…';
+      breathCount++;
+      document.getElementById('breath-counter').textContent = breathCount;
+      breathTimer = setTimeout(runBreath, 4500);
+    }, 1800);
+  }, 4000);
+}
+
+// SENSES
+const SENSE_PROMPTS = [
+  {count:5, sense:'see', icon:'👁️', prompt:'Name <strong>5 things you can see</strong> right now. Look slowly around the space you\'re in.'},
+  {count:4, sense:'hear', icon:'👂', prompt:'Notice <strong>4 sounds you can hear</strong>. Listen beyond the obvious — what\'s in the background?'},
+  {count:3, sense:'touch', icon:'✋', prompt:'Find <strong>3 things you can feel</strong> — your chair, your clothes, the temperature of the air.'},
+  {count:2, sense:'smell', icon:'👃', prompt:'Identify <strong>2 things you can smell</strong>. Even faint ones count — the room, your clothes, outside air.'},
+  {count:1, sense:'taste', icon:'👅', prompt:'Notice <strong>1 thing you can taste</strong> right now. Even the absence of taste is an answer.'}
+];
+let senseIdx = 0;
+
+function startSenses() {
+  senseIdx = 0;
+  showSense(0);
+}
+
+function showSense(idx) {
+  const s = SENSE_PROMPTS[idx];
+  document.getElementById('sense-count-display').textContent = s.count;
+  document.getElementById('sense-prompt').innerHTML = s.prompt;
+  // highlight current sense icon
+  [5,4,3,2,1].forEach((n,i) => {
+    const el = document.getElementById('sense-' + n);
+    el.classList.toggle('highlighted', i === idx);
+  });
+  const btn = document.getElementById('senses-next-btn');
+  btn.textContent = idx < 4 ? 'Next sense →' : 'Done →';
+}
+
+function nextSense() {
+  if (senseIdx < 4) { senseIdx++; showSense(senseIdx); }
+  else showGStep(5);
+}
+
+// BODY SCAN
+const BODY_ITEMS = ['body-jaw','body-shoulders','body-hands','body-breath'];
+let bodyActiveIdx = -1;
+
+function startBodyScan() {
+  bodyActiveIdx = -1;
+  BODY_ITEMS.forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('body-next-btn').textContent = 'Start →';
+}
+
+function nextBodyItem() {
+  if (bodyActiveIdx >= 0) document.getElementById(BODY_ITEMS[bodyActiveIdx]).classList.remove('active');
+  bodyActiveIdx++;
+  if (bodyActiveIdx < BODY_ITEMS.length) {
+    document.getElementById(BODY_ITEMS[bodyActiveIdx]).classList.add('active');
+    document.getElementById('body-next-btn').textContent = bodyActiveIdx < BODY_ITEMS.length - 1 ? 'Next →' : 'Done →';
+  } else {
+    showGStep(6);
+  }
+}
+
+// ══ TODAY CARDS ══
+function renderTodayCards() {
+  const container = document.getElementById('cat-cards');
+  const answered = todayAnswered.length;
+  document.getElementById('prog-label').textContent = `${answered} of 5 answered today`;
+  CAT_KEYS.forEach((k,i) => {
+    const el = document.getElementById('prog-' + i);
+    if (el) el.className = 'prog-dot' + (todayAnswered.includes(k) ? ' done' : '');
+  });
+  container.innerHTML = CAT_KEYS.map(key => {
+    const cat = CATS[key];
+    const done = todayAnswered.includes(key);
+    const prompt = DAILY_PROMPTS[key][promptIdx];
+    return `<div class="cat-card${done?' answered':''}" onclick="openJournal('${key}')">
+      <div class="cat-card-header">
+        <div class="cat-card-icon" style="background:${cat.bg};">${cat.icon}</div>
+        <div class="cat-card-info">
+          <span class="cat-card-name" style="color:${cat.fg};">${cat.label}</span>
+          <span class="cat-card-sub">${cat.sub}</span>
+        </div>
+        <div class="cat-card-status" style="color:${done?'var(--teal)':'var(--muted)'};">
+          ${done
+            ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`
+            : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Write`
+          }
+        </div>
+      </div>
+      <div class="cat-card-question">${prompt}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══ JOURNAL ══
+function openJournal(key) {
+  currentCat = key;
+  const cat = CATS[key];
+  ['journal-badge','reflection-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = cat.label; el.style.background = cat.bg; el.style.color = cat.fg;
+  });
+  document.getElementById('journal-cat-label').textContent = cat.label + ' · today\'s prompt';
+  document.getElementById('journal-cat-label').style.color = cat.fg;
+  document.getElementById('journal-prompt').textContent = DAILY_PROMPTS[key][promptIdx];
+  document.getElementById('ref-mode-label').textContent = cat.modeLabel;
+  const placeholders = {emotions:"Write about what you're feeling — no filter needed…",relationships:"Tell me what's happening with this person or situation…",self:"What's been going on with how you see yourself lately…",stress:"What's been pressing on you — lay it all out…",growth:"What are you working on or working through right now…"};
+  document.getElementById('entry-input').placeholder = placeholders[key];
+  document.getElementById('entry-input').value = '';
+  updateWordCount();
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  selectedMood = null;
+  ss('journal');
+}
+
+function selectMood(btn) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); selectedMood = btn.textContent;
+}
+
+function updateWordCount() {
+  const w = document.getElementById('entry-input').value.trim().split(/\s+/).filter(x=>x).length;
+  document.getElementById('word-count').textContent = w===0?'0 words':`${w} word${w===1?'':'s'}`;
+}
+
+// ══ SUBMIT ══
+async function submitEntry() {
+  const text = document.getElementById('entry-input').value.trim();
+  if (text.length < 10) { const ta=document.getElementById('entry-input'); ta.style.outline='2px solid #f0997b'; setTimeout(()=>ta.style.outline='none',1500); return; }
+  const cat = CATS[currentCat];
+  currentEntry = {text, mood:selectedMood, category:currentCat, prompt:DAILY_PROMPTS[currentCat][promptIdx], date:new Date().toISOString()};
+  isLiked=false; isSaved=false; currentReflection=null;
+  document.getElementById('recap-text').textContent = text.length>240?text.slice(0,240)+'…':text;
+  document.getElementById('crisis-banner').classList.remove('visible');
+  document.getElementById('reflection-card').style.display='block';
+  document.getElementById('reflection-output').className='reflection-text loading';
+  document.getElementById('reflection-output').innerHTML='Reading your entry<span class="typing-dots"><span></span><span></span><span></span></span>';
+  document.getElementById('reaction-bar').style.display='none';
+  document.getElementById('therapy-tip').style.display='none';
+  document.getElementById('ref-actions').style.display='none';
+  document.getElementById('closing-ground-card').style.display='none';
+  resetReactBtns();
+  ss('reflection');
+  document.getElementById('submit-btn').disabled=true;
+  try {
+    const msg=`Category: ${cat.label}\nMood: ${selectedMood||'not specified'}\nPrompt: "${DAILY_PROMPTS[currentCat][promptIdx]}"\n\nJournal entry:\n${text}`;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:cat.system,messages:[{role:'user',content:msg}]})});
+    const data=await res.json();
+    const raw=(data?.content?.[0]?.text||'').trim();
+    if(raw.toUpperCase()==='CRISIS'||raw.toUpperCase().startsWith('CRISIS')){
+      document.getElementById('reflection-card').style.display='none';
+      document.getElementById('crisis-banner').classList.add('visible');
+    } else {
+      currentReflection=raw;
+      document.getElementById('reflection-output').className='reflection-text';
+      typeText(document.getElementById('reflection-output'),raw,()=>{
+        document.getElementById('reaction-bar').style.display='flex';
+        document.getElementById('ref-actions').style.display='flex';
+        document.getElementById('closing-ground-card').style.display='block';
+        if(!todayAnswered.includes(currentCat)){todayAnswered.push(currentCat);localStorage.setItem('reflect_today_'+todayKey,JSON.stringify(todayAnswered));}
+        saveToHistory();
+      });
+    }
+  } catch(e){
+    document.getElementById('reflection-output').className='reflection-text';
+    document.getElementById('reflection-output').textContent="Something went quiet on our end. Your entry is safe — try again in a moment.";
+    document.getElementById('ref-actions').style.display='flex';
+  }
+  document.getElementById('submit-btn').disabled=false;
+}
+
+function typeText(el,text,onDone){el.textContent='';let i=0;(function tick(){if(i<text.length){el.textContent+=text[i++];setTimeout(tick,14);}else if(onDone)onDone();})();}
+function saveToHistory(){if(!currentEntry)return;entries.unshift({...currentEntry,reflection:currentReflection,liked:false,saved:false,id:Date.now()});localStorage.setItem('reflect_entries',JSON.stringify(entries));}
+function resetReactBtns(){const lb=document.getElementById('like-btn'),sb=document.getElementById('save-btn');lb.className='react-btn';lb.querySelector('svg').setAttribute('fill','none');lb.querySelector('svg').setAttribute('stroke','currentColor');document.getElementById('like-label').textContent='This resonated';sb.className='react-btn';sb.querySelector('svg').setAttribute('fill','none');sb.querySelector('svg').setAttribute('stroke','currentColor');document.getElementById('save-label').textContent='Save for session';document.getElementById('react-hint').textContent='';document.getElementById('therapy-tip').style.display='none';}
+
+function toggleLike(){isLiked=!isLiked;const btn=document.getElementById('like-btn'),svg=btn.querySelector('svg');if(isLiked){btn.className='react-btn liked heart-pop';svg.setAttribute('fill','var(--gold)');svg.setAttribute('stroke','var(--gold)');document.getElementById('like-label').textContent='Resonated';setTimeout(()=>btn.classList.remove('heart-pop'),300);}else{btn.className='react-btn';svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');document.getElementById('like-label').textContent='This resonated';}if(entries.length&&entries[0].reflection===currentReflection){entries[0].liked=isLiked;localStorage.setItem('reflect_entries',JSON.stringify(entries));}}
+
+function toggleSave(){isSaved=!isSaved;const btn=document.getElementById('save-btn'),svg=btn.querySelector('svg');if(isSaved){btn.className='react-btn saved';svg.setAttribute('fill','var(--teal)');svg.setAttribute('stroke','var(--teal)');document.getElementById('save-label').textContent='Saved';document.getElementById('react-hint').textContent='Bring this to your next session';document.getElementById('therapy-tip').style.display='block';if(currentReflection&&currentEntry&&!savedReflections.find(r=>r.reflection===currentReflection)){savedReflections.unshift({id:Date.now(),reflection:currentReflection,snippet:currentEntry.text.length>100?currentEntry.text.slice(0,100)+'…':currentEntry.text,category:currentCat,mood:selectedMood,date:currentEntry.date});localStorage.setItem('reflect_saved',JSON.stringify(savedReflections));}if(entries.length){entries[0].saved=true;localStorage.setItem('reflect_entries',JSON.stringify(entries));}}else{btn.className='react-btn';svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');document.getElementById('save-label').textContent='Save for session';document.getElementById('react-hint').textContent='';document.getElementById('therapy-tip').style.display='none';savedReflections=savedReflections.filter(r=>r.reflection!==currentReflection);localStorage.setItem('reflect_saved',JSON.stringify(savedReflections));if(entries.length){entries[0].saved=false;localStorage.setItem('reflect_entries',JSON.stringify(entries));}}}
+
+function renderSaved(){const list=document.getElementById('saved-list');document.getElementById('saved-count').textContent=`${savedReflections.length} saved`;if(!savedReflections.length){list.innerHTML='<div class="empty-state">Reflections you save will appear here — perfect for bringing to your next therapy session.</div>';return;}list.innerHTML=savedReflections.map(r=>{const cat=r.category?CATS[r.category]:null;const d=new Date(r.date).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});const badge=cat?`<span class="saved-card-badge" style="background:${cat.bg};color:${cat.fg};">${cat.label}</span>`:'';return`<div class="saved-card"><div class="saved-card-meta"><span class="saved-card-date">${d}</span>${badge}</div><div class="saved-card-snippet">"${r.snippet}"</div><div class="saved-card-text">${r.reflection}</div><div class="saved-card-footer"><button class="tiny-btn danger" onclick="unsave(${r.id})">Remove</button><button class="tiny-btn" onclick="copyRef(${r.id},this)">Copy to clipboard</button></div></div>`;}).join('');}
+function unsave(id){savedReflections=savedReflections.filter(r=>r.id!==id);localStorage.setItem('reflect_saved',JSON.stringify(savedReflections));renderSaved();}
+function copyRef(id,btn){const r=savedReflections.find(r=>r.id==id);if(!r)return;const cat=r.category?CATS[r.category]:null;const text=`Reflect — ${cat?cat.label+' · ':''}${new Date(r.date).toLocaleDateString('en-CA',{month:'long',day:'numeric'})}\n\nMy entry:\n"${r.snippet}"\n\nReflection:\n${r.reflection}`;navigator.clipboard.writeText(text).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy to clipboard',2000);});}
+
+function renderHistory(){const list=document.getElementById('entries-list');document.getElementById('entry-count').textContent=`${entries.length} entr${entries.length===1?'y':'ies'}`;if(!entries.length){list.innerHTML='<div class="empty-state">Your entries will appear here after you write your first one.</div>';return;}list.innerHTML=entries.map(e=>{const cat=e.category?CATS[e.category]:null;const d=new Date(e.date).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});const badge=cat?`<span class="ec-badge" style="background:${cat.bg};color:${cat.fg};">${cat.label}</span>`:'';const mood=e.mood?`<span class="ec-mood">${e.mood}</span>`:'';const savedBadge=e.saved?`<span class="ec-saved"><svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold)"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>saved</span>`:'';const ref=e.reflection?`<div class="ec-reflection">${e.reflection.slice(0,120)}${e.reflection.length>120?'…':''}</div>`:'';return`<div class="entry-card"><div class="ec-meta"><span class="ec-date">${d}</span>${badge}${mood}${savedBadge}</div><div class="ec-text">${e.text}</div>${ref}</div>`;}).join('');}
+
+// ══ WHISPER VOICE ══
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let timerInterval = null;
+let timerSeconds = 0;
+
+async function toggleRecording() {
+  if (isRecording) { stopRecording(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    // Pick best supported format — Whisper accepts webm, mp4, ogg, wav
+    const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4']
+      .find(t => MediaRecorder.isTypeSupported(t)) || '';
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      setTranscribing(true);
+      const actualType = mediaRecorder.mimeType || 'audio/webm';
+      const blob = new Blob(audioChunks, { type: actualType });
+      try {
+        const transcript = await transcribeWithWhisper(blob, actualType);
+        const ta = document.getElementById('entry-input');
+        ta.value = ta.value ? ta.value.trimEnd() + ' ' + transcript : transcript;
+        updateWordCount();
+        setVoiceIdle();
+      } catch(err) {
+        console.error('Transcription error:', err);
+        setVoiceError('Transcription failed — check your connection and try again.');
+      }
+    };
+    mediaRecorder.start(250);
+    isRecording = true;
+    timerSeconds = 0;
+    setRecording();
+    timerInterval = setInterval(() => {
+      timerSeconds++;
+      const m = Math.floor(timerSeconds/60).toString().padStart(2,'0');
+      const s = (timerSeconds%60).toString().padStart(2,'0');
+      document.getElementById('voice-timer').textContent = m+':'+s;
+      if (timerSeconds >= 300) stopRecording();
+    }, 1000);
+  } catch(err) {
+    console.error('Mic error:', err);
+    setVoiceError('Microphone access denied — please allow mic access in your browser settings.');
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  clearInterval(timerInterval);
+  isRecording = false;
+}
+
+async function transcribeWithWhisper(blob, mimeType) {
+  // Determine file extension from mime type
+  const ext = mimeType.includes('ogg') ? 'ogg'
+    : mimeType.includes('mp4') ? 'mp4'
+    : mimeType.includes('wav') ? 'wav'
+    : 'webm';
+  const formData = new FormData();
+  formData.append('file', blob, `recording.${ext}`);
+  formData.append('model', 'whisper-1');
+  formData.append('language', 'en');
+  // Call Netlify serverless function — keeps API key off the frontend
+  const res = await fetch('/.netlify/functions/transcribe', {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Proxy error ${res.status}: ${err}`);
+  }
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data.text || '';
+}
+
+function setRecording() {
+  const btn = document.getElementById('voice-btn');
+  btn.className = 'voice-btn recording';
+  document.getElementById('voice-icon').innerHTML = '<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>';
+  document.getElementById('voice-btn-label').textContent = 'Stop recording';
+  document.getElementById('voice-wave').className = 'voice-wave active';
+  document.getElementById('voice-transcribing').className = 'voice-transcribing';
+  document.getElementById('voice-status').textContent = 'Recording… speak naturally';
+  const timer = document.getElementById('voice-timer');
+  timer.style.display = 'block';
+  timer.textContent = '00:00';
+}
+
+function setTranscribing(on) {
+  document.getElementById('voice-btn').className = 'voice-btn';
+  document.getElementById('voice-icon').innerHTML = '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>';
+  document.getElementById('voice-btn-label').textContent = 'Speak instead';
+  document.getElementById('voice-wave').className = 'voice-wave';
+  document.getElementById('voice-timer').style.display = 'none';
+  document.getElementById('voice-transcribing').className = on ? 'voice-transcribing active' : 'voice-transcribing';
+  document.getElementById('voice-status').textContent = '';
+}
+
+function setVoiceIdle() {
+  setTranscribing(false);
+  document.getElementById('voice-status').textContent = 'Transcription complete — edit if needed';
+  setTimeout(() => { document.getElementById('voice-status').textContent = ''; }, 3000);
+}
+
+function setVoiceError(msg) {
+  setTranscribing(false);
+  document.getElementById('voice-status').textContent = msg;
+  setTimeout(() => { document.getElementById('voice-status').textContent = ''; }, 5000);
+}
+</script>
+</body>
+</html>
